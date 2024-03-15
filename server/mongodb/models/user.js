@@ -34,6 +34,26 @@ const User = new mongoose.Schema({
 	resetPasswordTime: Date,
 });
 
+// Hash password
+userSchema.pre("save", async function () {
+	if (!this.isModified("password")) {
+		return;
+	}
+	this.password = await bcrypt.hash(this.password, 10);
+});
+
+// JWT token
+userSchema.methods.getJwtToken = function () {
+	return jwt.sign({ id: this._id }, process.env.JWT_SECRET_KEY, {
+		expiresIn: process.env.JWT_EXPIRES,
+	});
+};
+
+// Compare password
+userSchema.methods.comparePassword = async function (enteredPassword) {
+	return await bcrypt.compare(enteredPassword, this.password);
+};
+
 const UserSchema = mongoose.model("User", User);
 
 export default UserSchema;
